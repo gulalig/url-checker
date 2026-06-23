@@ -1,5 +1,6 @@
 import { Inngest } from 'inngest';
+import { INNGEST_CLIENT } from './constants/inngest.constants';
 
 export const inngest = new Inngest({
-  id: 'url-checker',
+  id: INNGEST_CLIENT.ID,
 });

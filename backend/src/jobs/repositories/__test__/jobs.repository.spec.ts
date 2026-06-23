@@ -1,6 +1,7 @@
 import { JobsRepository } from '../jobs.repository';
 import { JobStatus } from '../../enums/job-status.enum';
 import { UrlCheckStatus } from '../../enums/url-check-status.enum';
+import { Job, UrlCheck } from '../../interfaces/job.interface';
 
 describe('JobsRepository', () => {
   let repository: JobsRepository;
@@ -8,6 +9,49 @@ describe('JobsRepository', () => {
   beforeEach(() => {
     repository = new JobsRepository();
   });
+
+  const createJob = (urls: string[]): Job =>
+    repository.create({
+      urls,
+    });
+
+  const getFirstUrlCheck = (job: Job): UrlCheck => {
+    const [urlCheck] = job.urls;
+
+    if (!urlCheck) {
+      throw new Error('Expected job to contain at least one URL check');
+    }
+
+    return urlCheck;
+  };
+
+  const getFirstTwoUrlChecks = (job: Job): [UrlCheck, UrlCheck] => {
+    const [firstUrlCheck, secondUrlCheck] = job.urls;
+
+    if (!firstUrlCheck || !secondUrlCheck) {
+      throw new Error('Expected job to contain two URL checks');
+    }
+
+    return [firstUrlCheck, secondUrlCheck];
+  };
+
+  const completeUrlCheckAsSuccess = (
+    jobId: string,
+    urlCheckId: string,
+    httpStatus = 200,
+  ): void => {
+    repository.markUrlInProgress(jobId, urlCheckId);
+    repository.saveUrlSuccess(jobId, urlCheckId, httpStatus);
+  };
+
+  const completeUrlCheckAsError = (
+    jobId: string,
+    urlCheckId: string,
+    error = 'fetch failed',
+  ): void => {
+    repository.markUrlInProgress(jobId, urlCheckId);
+    repository.saveUrlError(jobId, urlCheckId, error);
+  };
 
   afterEach(() => {
     jest.useRealTimers();
@@ -60,7 +104,7 @@ describe('JobsRepository', () => {
       urls: ['https://example.com'],
     });
 
-    const [urlCheck] = job.urls;
+    const urlCheck = getFirstUrlCheck(job);
 
     const updatedUrlCheck = repository.markUrlInProgress(job.id, urlCheck.id);
     const updatedJob = repository.findById(job.id);
@@ -79,7 +123,7 @@ describe('JobsRepository', () => {
       urls: ['https://example.com'],
     });
 
-    const [urlCheck] = job.urls;
+    const urlCheck = getFirstUrlCheck(job);
 
     repository.markUrlInProgress(job.id, urlCheck.id);
 
@@ -102,7 +146,7 @@ describe('JobsRepository', () => {
       urls: ['https://invalid.example'],
     });
 
-    const [urlCheck] = job.urls;
+    const urlCheck = getFirstUrlCheck(job);
 
     repository.markUrlInProgress(job.id, urlCheck.id);
 
@@ -125,7 +169,7 @@ describe('JobsRepository', () => {
       urls: ['https://example.com', 'https://github.com'],
     });
 
-    const [firstUrlCheck] = job.urls;
+    const firstUrlCheck = getFirstUrlCheck(job);
 
     repository.markUrlInProgress(job.id, firstUrlCheck.id);
     repository.saveUrlSuccess(job.id, firstUrlCheck.id, 200);
@@ -134,16 +178,11 @@ describe('JobsRepository', () => {
   });
 
   it('should complete job when all URL checks are final', () => {
-    const job = repository.create({
-      urls: ['https://example.com', 'https://invalid.example'],
-    });
-    const [successCheck, errorCheck] = job.urls;
+    const job = createJob(['https://example.com', 'https://invalid.example']);
+    const [successCheck, errorCheck] = getFirstTwoUrlChecks(job);
 
-    repository.markUrlInProgress(job.id, successCheck.id);
-    repository.saveUrlSuccess(job.id, successCheck.id, 200);
-
-    repository.markUrlInProgress(job.id, errorCheck.id);
-    repository.saveUrlError(job.id, errorCheck.id, 'fetch failed');
+    completeUrlCheckAsSuccess(job.id, successCheck.id);
+    completeUrlCheckAsError(job.id, errorCheck.id);
 
     const completedJob = repository.findById(job.id);
 
@@ -157,7 +196,7 @@ describe('JobsRepository', () => {
       urls: ['https://example.com', 'https://github.com'],
     });
 
-    const [inProgressUrlCheck, pendingUrlCheck] = job.urls;
+    const [inProgressUrlCheck, pendingUrlCheck] = getFirstTwoUrlChecks(job);
 
     repository.markUrlInProgress(job.id, inProgressUrlCheck.id);
 
@@ -182,17 +221,11 @@ describe('JobsRepository', () => {
   });
 
   it('should not overwrite success or error URL checks during cancellation', () => {
-    const job = repository.create({
-      urls: ['https://example.com', 'https://invalid.example'],
-    });
+    const job = createJob(['https://example.com', 'https://invalid.example']);
+    const [successCheck, errorCheck] = getFirstTwoUrlChecks(job);
 
-    const [successCheck, errorCheck] = job.urls;
-
-    repository.markUrlInProgress(job.id, successCheck.id);
-    repository.saveUrlSuccess(job.id, successCheck.id, 200);
-
-    repository.markUrlInProgress(job.id, errorCheck.id);
-    repository.saveUrlError(job.id, errorCheck.id, 'fetch failed');
+    completeUrlCheckAsSuccess(job.id, successCheck.id);
+    completeUrlCheckAsError(job.id, errorCheck.id);
 
     const cancelledJob = repository.cancel(job.id);
 
@@ -206,11 +239,11 @@ describe('JobsRepository', () => {
       urls: ['https://example.com'],
     });
 
-    const [urlCheck] = job.urls;
+    const firstUrlCheck = getFirstUrlCheck(job);
 
     repository.cancel(job.id);
 
-    const result = repository.saveUrlSuccess(job.id, urlCheck.id, 200);
+    const result = repository.saveUrlSuccess(job.id, firstUrlCheck.id, 200);
 
     expect(result).toBeUndefined();
     expect(repository.findById(job.id)?.status).toBe(JobStatus.Cancelled);
@@ -231,5 +264,44 @@ describe('JobsRepository', () => {
     expect(
       repository.saveUrlError('missing-id', 'url-check-id', 'error'),
     ).toBeUndefined();
+  });
+
+  it('should not mark job as in progress when URL check does not exist', () => {
+    const job = repository.create({
+      urls: ['https://example.com'],
+    });
+
+    const result = repository.markUrlInProgress(job.id, 'missing-url-check-id');
+    const storedJob = repository.findById(job.id);
+
+    expect(result).toBeUndefined();
+    expect(storedJob?.status).toBe(JobStatus.Pending);
+    expect(storedJob?.urls[0].status).toBe(UrlCheckStatus.Pending);
+  });
+
+  it('should not overwrite final URL check result', () => {
+    const job = repository.create({
+      urls: ['https://example.com'],
+    });
+
+    const urlCheck = getFirstUrlCheck(job);
+
+    repository.markUrlInProgress(job.id, urlCheck.id);
+    repository.saveUrlSuccess(job.id, urlCheck.id, 200);
+
+    const overwriteResult = repository.saveUrlError(
+      job.id,
+      urlCheck.id,
+      'late error',
+    );
+
+    const storedJob = repository.findById(job.id);
+    const storedUrlCheck = storedJob?.urls[0];
+
+    expect(overwriteResult).toBeUndefined();
+    expect(storedJob?.status).toBe(JobStatus.Completed);
+    expect(storedUrlCheck?.status).toBe(UrlCheckStatus.Success);
+    expect(storedUrlCheck?.httpStatus).toBe(200);
+    expect(storedUrlCheck?.error).toBeUndefined();
   });
 });

@@ -98,7 +98,7 @@ export class JobsService {
           jobId,
           status: job.status,
         },
-        LOGGER_MESSAGES.FAILED_JOB_CANCELLATION_REJECTED,
+        LOGGER_MESSAGES.COMPLETED_JOB_CANCELLATION_REJECTED,
       );
 
       throw new ConflictException(

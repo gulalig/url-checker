@@ -1,15 +1,16 @@
 import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import { CreateJobDto } from './dto/create-job.dto';
-import * as jobInterface from './interfaces/job.interface';
 import { JobsService } from './jobs.service';
-import { CreateJobResponse } from './interfaces/job.interface';
+import * as jobInterface from './interfaces/job.interface';
 
 @Controller('jobs')
 export class JobsController {
   constructor(private readonly jobsService: JobsService) {}
 
   @Post()
-  createJob(@Body() dto: CreateJobDto): Promise<CreateJobResponse> {
+  createJob(
+    @Body() dto: CreateJobDto,
+  ): Promise<jobInterface.CreateJobResponse> {
     return this.jobsService.createJob(dto);
   }
 
@@ -24,7 +25,9 @@ export class JobsController {
   }
 
   @Delete(':id')
-  cancelJob(@Param('id') jobId: string): Promise<CreateJobResponse> {
+  cancelJob(
+    @Param('id') jobId: string,
+  ): Promise<jobInterface.CancelJobResponse> {
     return this.jobsService.cancelJob(jobId);
   }
 }
