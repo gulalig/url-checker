@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateJobDto } from './dto/create-job.dto';
 import { JobStatus } from './enums/job-status.enum';
 import {
@@ -12,15 +16,28 @@ import {
   mapJobToSummary,
 } from './mappers/job-response.mapper';
 import { JobsRepository } from './repositories/jobs.repository';
+import { inngest } from '../inngest/inngest.client';
+import { InngestEventName } from '../inngest/enums/inngest-event-name.enum';
 
 @Injectable()
 export class JobsService {
   constructor(private readonly jobsRepository: JobsRepository) {}
 
-  createJob(dto: CreateJobDto): CreateJobResponse {
+  async createJob(dto: CreateJobDto): Promise<CreateJobResponse> {
     const job = this.jobsRepository.create({
       urls: dto.urls,
     });
+
+    await inngest.send(
+      job.urls.map((urlCheck) => ({
+        name: InngestEventName.UrlCheckRequested,
+        data: {
+          jobId: job.id,
+          urlCheckId: urlCheck.id,
+          url: urlCheck.url,
+        },
+      })),
+    );
 
     return {
       jobId: job.id,
@@ -41,7 +58,7 @@ export class JobsService {
     return mapJobToDetails(job);
   }
 
-  cancelJob(jobId: string): CancelJobResponse {
+  async cancelJob(jobId: string): Promise<CancelJobResponse> {
     const job = this.jobsRepository.findById(jobId);
 
     if (!job) {
@@ -62,9 +79,34 @@ export class JobsService {
       throw new NotFoundException('Job not found');
     }
 
+    await inngest.send({
+      name: InngestEventName.JobCancelled,
+      data: {
+        jobId: cancelledJob.id,
+      },
+    });
+
     return {
       jobId: cancelledJob.id,
       status: JobStatus.Cancelled,
     };
+  }
+
+  markUrlInProgress(jobId: string, urlCheckId: string): void {
+    this.jobsRepository.markUrlInProgress(jobId, urlCheckId);
+  }
+
+  saveUrlSuccess(jobId: string, urlCheckId: string, httpStatus: number): void {
+    this.jobsRepository.saveUrlSuccess(jobId, urlCheckId, httpStatus);
+  }
+
+  saveUrlError(jobId: string, urlCheckId: string, error: string): void {
+    this.jobsRepository.saveUrlError(jobId, urlCheckId, error);
+  }
+
+  isJobCancelled(jobId: string): boolean {
+    const job = this.jobsRepository.findById(jobId);
+
+    return job?.status === JobStatus.Cancelled;
   }
 }
