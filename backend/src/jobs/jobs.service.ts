@@ -18,15 +18,30 @@ import {
 import { JobsRepository } from './repositories/jobs.repository';
 import { inngest } from '../inngest/inngest.client';
 import { InngestEventName } from '../inngest/enums/inngest-event-name.enum';
+import { InjectPinoLogger, PinoLogger } from "nestjs-pino";
+import { ERROR_MESSAGES } from '../common/constants/error-messages.constant';
+import { LOGGER_MESSAGES } from '../logger/constants/logger-messages.constant';
 
 @Injectable()
 export class JobsService {
-  constructor(private readonly jobsRepository: JobsRepository) {}
+  constructor(
+    private readonly jobsRepository: JobsRepository,
+    @InjectPinoLogger(JobsService.name)
+    private readonly logger: PinoLogger,
+  ) {}
 
   async createJob(dto: CreateJobDto): Promise<CreateJobResponse> {
     const job = this.jobsRepository.create({
       urls: dto.urls,
     });
+
+    this.logger.info(
+      {
+        jobId: job.id,
+        totalUrls: job.urls.length,
+      },
+      LOGGER_MESSAGES.JOB_CREATED,
+    );
 
     await inngest.send(
       job.urls.map((urlCheck) => ({
@@ -37,6 +52,14 @@ export class JobsService {
           url: urlCheck.url,
         },
       })),
+    );
+
+    this.logger.info(
+      {
+        jobId: job.id,
+        totalEvents: job.urls.length,
+      },
+      LOGGER_MESSAGES.URL_CHECK_EVENTS_SENT_TO_INNGEST,
     );
 
     return {
@@ -52,7 +75,9 @@ export class JobsService {
     const job = this.jobsRepository.findById(jobId);
 
     if (!job) {
-      throw new NotFoundException('Job not found');
+      this.logger.warn({ jobId }, LOGGER_MESSAGES.JOB_DETAILS_NOT_FOUND);
+
+      throw new NotFoundException(ERROR_MESSAGES.JOB_NOT_FOUND);
     }
 
     return mapJobToDetails(job);
@@ -62,21 +87,41 @@ export class JobsService {
     const job = this.jobsRepository.findById(jobId);
 
     if (!job) {
-      throw new NotFoundException('Job not found');
+      this.logger.warn({ jobId }, LOGGER_MESSAGES.JOB_CANCELLATION_NOT_FOUND);
+
+      throw new NotFoundException(ERROR_MESSAGES.JOB_NOT_FOUND);
     }
 
     if (job.status === JobStatus.Completed) {
-      throw new ConflictException('Completed job cannot be cancelled');
+      this.logger.warn(
+        {
+          jobId,
+          status: job.status,
+        },
+        LOGGER_MESSAGES.FAILED_JOB_CANCELLATION_REJECTED,
+      );
+
+      throw new ConflictException(ERROR_MESSAGES.COMPLETED_JOB_CANNOT_BE_CANCELLED);
     }
 
     if (job.status === JobStatus.Failed) {
-      throw new ConflictException('Failed job cannot be cancelled');
+      this.logger.warn(
+        {
+          jobId,
+          status: job.status,
+        },
+        LOGGER_MESSAGES.FAILED_JOB_CANCELLATION_REJECTED,
+      );
+
+      throw new ConflictException(ERROR_MESSAGES.FAILED_JOB_CANNOT_BE_CANCELLED);
     }
 
     const cancelledJob = this.jobsRepository.cancel(jobId);
 
     if (!cancelledJob) {
-      throw new NotFoundException('Job not found');
+      this.logger.warn({ jobId }, LOGGER_MESSAGES.JOB_DISAPPEARED_DURING_CANCELLATION);
+
+      throw new NotFoundException(ERROR_MESSAGES.JOB_NOT_FOUND);
     }
 
     await inngest.send({
@@ -85,6 +130,13 @@ export class JobsService {
         jobId: cancelledJob.id,
       },
     });
+
+    this.logger.info(
+      {
+        jobId: cancelledJob.id,
+      },
+      LOGGER_MESSAGES.JOB_CANCELLED_AND_EVENT_SENT,
+    );
 
     return {
       jobId: cancelledJob.id,
@@ -98,10 +150,28 @@ export class JobsService {
 
   saveUrlSuccess(jobId: string, urlCheckId: string, httpStatus: number): void {
     this.jobsRepository.saveUrlSuccess(jobId, urlCheckId, httpStatus);
+
+    this.logger.debug(
+      {
+        jobId,
+        urlCheckId,
+        httpStatus,
+      },
+      LOGGER_MESSAGES.URL_CHECK_SAVED_AS_SUCCESS,
+    );
   }
 
   saveUrlError(jobId: string, urlCheckId: string, error: string): void {
     this.jobsRepository.saveUrlError(jobId, urlCheckId, error);
+
+    this.logger.debug(
+      {
+        jobId,
+        urlCheckId,
+        error,
+      },
+      LOGGER_MESSAGES.URL_CHECK_SAVED_AS_ERROR,
+    );
   }
 
   isJobCancelled(jobId: string): boolean {
