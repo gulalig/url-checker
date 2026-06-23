@@ -18,7 +18,7 @@ import {
 import { JobsRepository } from './repositories/jobs.repository';
 import { inngest } from '../inngest/inngest.client';
 import { InngestEventName } from '../inngest/enums/inngest-event-name.enum';
-import { InjectPinoLogger, PinoLogger } from "nestjs-pino";
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { ERROR_MESSAGES } from '../common/constants/error-messages.constant';
 import { LOGGER_MESSAGES } from '../logger/constants/logger-messages.constant';
 
@@ -101,7 +101,9 @@ export class JobsService {
         LOGGER_MESSAGES.FAILED_JOB_CANCELLATION_REJECTED,
       );
 
-      throw new ConflictException(ERROR_MESSAGES.COMPLETED_JOB_CANNOT_BE_CANCELLED);
+      throw new ConflictException(
+        ERROR_MESSAGES.COMPLETED_JOB_CANNOT_BE_CANCELLED,
+      );
     }
 
     if (job.status === JobStatus.Failed) {
@@ -113,13 +115,18 @@ export class JobsService {
         LOGGER_MESSAGES.FAILED_JOB_CANCELLATION_REJECTED,
       );
 
-      throw new ConflictException(ERROR_MESSAGES.FAILED_JOB_CANNOT_BE_CANCELLED);
+      throw new ConflictException(
+        ERROR_MESSAGES.FAILED_JOB_CANNOT_BE_CANCELLED,
+      );
     }
 
     const cancelledJob = this.jobsRepository.cancel(jobId);
 
     if (!cancelledJob) {
-      this.logger.warn({ jobId }, LOGGER_MESSAGES.JOB_DISAPPEARED_DURING_CANCELLATION);
+      this.logger.warn(
+        { jobId },
+        LOGGER_MESSAGES.JOB_DISAPPEARED_DURING_CANCELLATION,
+      );
 
       throw new NotFoundException(ERROR_MESSAGES.JOB_NOT_FOUND);
     }
