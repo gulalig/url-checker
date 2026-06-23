@@ -43,3 +43,12 @@ export interface JobDetails extends JobStats {
 export interface CreateJobData {
   urls: string[];
 }
+
+export interface CreateJobResponse {
+  jobId: string;
+}
+
+export interface CancelJobResponse {
+  jobId: string;
+  status: JobStatus.Cancelled;
+}

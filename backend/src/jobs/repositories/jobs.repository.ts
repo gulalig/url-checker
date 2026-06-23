@@ -45,4 +45,32 @@ export class JobsRepository {
 
     return job;
   }
+
+  cancel(jobId: string): Job | undefined {
+    const job = this.findById(jobId);
+
+    if (!job) {
+      return undefined;
+    }
+
+    const cancelledJob: Job = {
+      ...job,
+      status: JobStatus.Cancelled,
+      urls: job.urls.map((urlCheck) => {
+        if (urlCheck.status !== UrlCheckStatus.Pending) {
+          return urlCheck;
+        }
+
+        return {
+          ...urlCheck,
+          status: UrlCheckStatus.Cancelled,
+          finishedAt: new Date().toISOString(),
+        };
+      }),
+    };
+
+    this.jobs.set(cancelledJob.id, cancelledJob);
+
+    return cancelledJob;
+  }
 }
