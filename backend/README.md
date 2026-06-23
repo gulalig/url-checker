@@ -1,98 +1,130 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# URL Checker
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Asynchronous URL checking service built with Node.js, TypeScript, NestJS, Inngest, and React.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+The project provides a REST API for creating URL check jobs and a frontend application for working with those jobs.
 
-## Description
+## Project Status
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Current implementation stage:
 
-## Project setup
+* Backend project initialized
+* Architecture documentation prepared
+* Inngest-based background processing planned
+* Frontend will be added after backend completion
 
-```bash
-$ npm install
+## Tech Stack
+
+### Backend
+
+* Node.js
+* TypeScript
+* NestJS
+* Inngest
+* In-memory storage
+
+### Frontend
+
+* TypeScript
+* React
+* Redux Toolkit
+
+### Infrastructure
+
+* Docker
+* Docker Compose
+
+## Main Requirements
+
+The system should support:
+
+* Creating asynchronous URL check jobs
+* Listing jobs
+* Viewing detailed job results
+* Cancelling jobs
+* Checking every URL with an HTTP HEAD request
+* Applying a random delay before saving each URL result
+* Processing no more than 5 URLs concurrently per job
+* Processing multiple jobs at the same time
+
+## Repository Structure
+
+```txt
+url-checker/
+  backend/
+    src/
+
+  frontend/
+    src/
+
+  docs/
+    architecture.md
+    api.md
+    development-workflow.md
+
+    decisions/
+      0001-use-nestjs.md
+      0002-use-inngest-for-background-processing.md
+      0003-use-in-memory-storage.md
+
+    diagrams/
+      backend-flow.md
+      job-state-machine.md
+      cancellation-flow.md
 ```
 
-## Compile and run the project
+## Backend Architecture
+
+The backend uses NestJS as the REST API layer and Inngest as the background processing layer.
+
+When a job is created, the API saves it in memory and sends one Inngest event for each URL. Each URL is processed asynchronously by an Inngest function.
+
+Concurrency is limited per job, which means that every job can process up to 5 URLs at the same time, while different jobs can still be processed independently.
+
+## Storage
+
+The project uses in-memory storage because the task does not require a database.
+
+This means that all jobs and results are lost after server restart.
+
+For a production version, the storage layer could be replaced with PostgreSQL, Redis, or another persistent storage solution.
+
+## Development
+
+Backend local start:
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+cd backend
+npm install
+npm run start:dev
 ```
 
-## Run tests
+Backend default URL:
 
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+```txt
+http://localhost:3000
 ```
 
-## Deployment
+## Documentation
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+Architecture documentation is located in:
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+```txt
+docs/architecture.md
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Architecture decision records are located in:
 
-## Resources
+```txt
+docs/decisions/
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+## Security Audit Note
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+The project may show an npm audit warning related to transitive dependencies of the NestJS Express platform package.
 
-## Support
+The implemented API does not expose file upload or multipart/form-data endpoints. For a production system, dependency updates should be reviewed regularly and applied when upstream packages provide patched versions.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## Notes
 
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+This repository is prepared as a test assignment implementation. The goal is to keep the implementation simple, readable, and well documented while still showing production-oriented architectural thinking.
