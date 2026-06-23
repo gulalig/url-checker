@@ -1,4 +1,4 @@
-# Job State Machine Diagram
+# Job State Machine
 
 ```mermaid
 stateDiagram-v2

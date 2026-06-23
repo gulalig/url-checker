@@ -1,37 +1,30 @@
-# Backend Flow Diagram
+# Backend Flow
 
 ```mermaid
 flowchart TD
-  A["Client sends POST /api/jobs"] --> B["NestJS Jobs Controller"]
-  B --> C["Jobs Service validates URLs"]
-  C --> D["Jobs Repository creates job"]
-  D --> E["Job status: pending"]
-  E --> F["Jobs Service sends Inngest events"]
+  A["Client sends POST /api/jobs"] --> B["JobsController"]
+  B --> C["JobsService creates job"]
+  C --> D["JobsRepository stores job in memory"]
+  D --> E["JobsService sends one Inngest event per URL"]
 
-  F --> G["One event per URL"]
-  G --> H["Inngest URL Check Function"]
+  E --> F["Inngest check-url function"]
+  F --> G{"Is job cancelled?"}
 
-  H --> I{"Job cancelled?"}
-  I -- "Yes" --> J["Mark URL as cancelled"]
-  I -- "No" --> K["Mark URL as in_progress"]
+  G -- "Yes" --> H["Skip processing"]
+  G -- "No" --> I["Mark URL as in_progress"]
 
-  K --> L["Perform HTTP HEAD request"]
-  L --> M{"Request result"}
+  I --> J["Send HTTP HEAD request"]
+  J --> K{"HEAD result"}
 
-  M -- "Success" --> N["Prepare success result with HTTP status"]
-  M -- "Error" --> O["Prepare error result with message"]
+  K -- "Success" --> L["Prepare success result"]
+  K -- "Error" --> M["Prepare error result"]
 
-  N --> P["Random delay 0-10 seconds"]
-  O --> P
+  L --> N["Wait random delay 0-10s"]
+  M --> N
 
-  P --> Q{"Job cancelled before save?"}
-  Q -- "Yes" --> R["Skip stale success/error update"]
-  Q -- "No" --> S["Save URL final result"]
+  N --> O{"Is job cancelled before save?"}
+  O -- "Yes" --> P["Skip stale result"]
+  O -- "No" --> Q["Save URL result"]
 
-  R --> T["Recalculate job status"]
-  S --> T
-
-  T --> U{"All URLs final?"}
-  U -- "No" --> V["Job remains in_progress"]
-  U -- "Yes" --> W["Job becomes completed or cancelled"]
+  Q --> R["Recalculate job status"]
 ```

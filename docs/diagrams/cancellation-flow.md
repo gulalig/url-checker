@@ -1,30 +1,31 @@
-# Cancellation Flow Diagram
+# Cancellation Flow
 
 ```mermaid
 sequenceDiagram
   participant Client
-  participant API as NestJS API
+  participant API as JobsController
   participant Service as JobsService
   participant Repo as JobsRepository
   participant Inngest
-  participant Fn as URL Check Function
+  participant Fn as check-url function
 
   Client->>API: DELETE /api/jobs/:id
   API->>Service: cancelJob(jobId)
 
-  Service->>Repo: find job
+  Service->>Repo: findById(jobId)
   Repo-->>Service: job
 
-  Service->>Repo: mark job as cancelled
-  Service->>Repo: mark pending URL checks as cancelled
-  Service->>Inngest: send job.cancelled event
+  Service->>Repo: cancel(jobId)
+  Repo-->>Service: cancelled job
 
-  API-->>Client: { jobId, status: cancelled }
+  Service->>Inngest: send job.cancelled event
+  API-->>Client: 200 cancelled
 
   Inngest-->>Fn: cancel matching function runs
 
-  Fn->>Repo: check latest job status
-  Repo-->>Fn: cancelled
+  Fn->>Service: isJobCancelled(jobId)
+  Service->>Repo: findById(jobId)
+  Repo-->>Service: cancelled
 
-  Fn->>Fn: skip stale result update
+  Fn-->>Fn: skip stale result save
 ```
