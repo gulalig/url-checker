@@ -61,9 +61,16 @@ npm run build
 npm run lint
 ```
 ---
-Notes
+#Notes
+
 The backend uses in-memory storage, so all jobs are lost after restarting the backend.
+
 The maximum number of concurrent HEAD requests is limited to 5 per job.
-A job may contain more than 5 URLs. The limit applies only to simultaneous URL checks, not to the total number of URLs.
+
+A job may contain more than 5 URLs. 
+
+The limit applies only to simultaneous URL checks, not to the total number of URLs.
+
 The frontend polls only the currently active job and stops polling when the job reaches a final status.
+
 Old polling responses are ignored if the active job has already changed.

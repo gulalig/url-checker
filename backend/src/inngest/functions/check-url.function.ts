@@ -159,6 +159,7 @@ export const createCheckUrlFunction = ({
             data.jobId,
             data.urlCheckId,
             result.error ?? ERROR_MESSAGES.UNKNOWN_URL_CHECK_ERROR,
+            result.httpStatus,
           );
         }
 
@@ -192,17 +193,35 @@ const performHeadRequest = async (
       signal: AbortSignal.timeout(URL_CHECK_CONFIG.HEAD_REQUEST_TIMEOUT_MS),
     });
 
+    const httpStatus = response.status;
+
     logger.debug(
       {
         url,
-        httpStatus: response.status,
+        httpStatus,
       },
       LOGGER_MESSAGES.HEAD_REQUEST_COMPLETED,
     );
 
+    if (!response.ok) {
+      logger.warn(
+        {
+          url,
+          httpStatus,
+        },
+        LOGGER_MESSAGES.HEAD_REQUEST_RETURNED_ERROR_STATUS,
+      );
+
+      return {
+        ok: false,
+        httpStatus,
+        error: `HTTP ${httpStatus}`,
+      };
+    }
+
     return {
       ok: true,
-      httpStatus: response.status,
+      httpStatus,
     };
   } catch (error) {
     const errorMessage = getErrorMessage(error);

@@ -23,10 +23,13 @@ export const LOGGER_MESSAGES = {
   URL_CHECK_RESULT_SKIPPED_JOB_CANCELLED:
     'URL check result skipped because job was cancelled before save',
   URL_CHECK_FUNCTION_COMPLETED: 'URL check function completed',
+  URL_CHECK_EVENTS_SEND_FAILED: 'Failed to send URL check events to Inngest',
 
   ARTIFICIAL_DELAY_GENERATED:
     'Artificial delay generated before saving URL result',
 
   HEAD_REQUEST_COMPLETED: 'HEAD request completed',
+  HEAD_REQUEST_RETURNED_ERROR_STATUS:
+    'HEAD request returned non-success status',
   HEAD_REQUEST_FAILED: 'HEAD request failed',
 } as const;
