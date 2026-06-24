@@ -195,6 +195,7 @@ export class JobsRepository {
     jobId: string,
     urlCheckId: string,
     error: string,
+    httpStatus?: number,
   ): UrlCheck | undefined {
     const job = this.findById(jobId);
 
@@ -217,6 +218,7 @@ export class JobsRepository {
       updatedUrlCheck = {
         ...urlCheck,
         status: UrlCheckStatus.Error,
+        httpStatus,
         error,
         finishedAt,
         durationMs: this.calculateDurationMs(urlCheck.startedAt, finishedAt),
@@ -237,6 +239,38 @@ export class JobsRepository {
     this.save(this.recalculateJobStatus(updatedJob));
 
     return updatedUrlCheck;
+  }
+
+  fail(jobId: string, error: string): Job | undefined {
+    const job = this.findById(jobId);
+
+    if (!job || this.isTerminalJobStatus(job.status)) {
+      return undefined;
+    }
+
+    const finishedAt = new Date().toISOString();
+
+    const failedJob: Job = {
+      ...job,
+      status: JobStatus.Failed,
+      urls: job.urls.map((urlCheck) => {
+        if (this.isFinalUrlCheckStatus(urlCheck.status)) {
+          return urlCheck;
+        }
+
+        return {
+          ...urlCheck,
+          status: UrlCheckStatus.Error,
+          error,
+          finishedAt,
+          durationMs: this.calculateDurationMs(urlCheck.startedAt, finishedAt),
+        };
+      }),
+    };
+
+    this.jobs.set(failedJob.id, failedJob);
+
+    return failedJob;
   }
 
   private recalculateJobStatus(job: Job): Job {
