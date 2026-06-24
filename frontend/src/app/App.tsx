@@ -1,6 +1,6 @@
 import { PageHeader } from '@/components';
 import { Layout } from "@/shared/Layout";
-import { CreateJobForm, JobsList } from "@/features";
+import { CreateJobForm, JobsList, JobDetails } from "@/features";
 
 export const App = () => (
   <Layout>
@@ -10,5 +10,6 @@ export const App = () => (
     />
     <CreateJobForm />
     <JobsList />
+    <JobDetails />
   </Layout>
 );
