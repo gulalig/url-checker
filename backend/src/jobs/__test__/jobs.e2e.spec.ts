@@ -1,8 +1,4 @@
-import {
-  ConflictException,
-  INestApplication,
-  ValidationPipe,
-} from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import type { Server } from 'node:http';
 import request from 'supertest';
@@ -323,11 +319,5 @@ describe('Jobs API e2e', () => {
     expect(getStringProperty(cancelBody, 'message')).toBe(
       ERROR_MESSAGES.COMPLETED_JOB_CANNOT_BE_CANCELLED,
     );
-
-    expect(() => {
-      throw new ConflictException(
-        ERROR_MESSAGES.COMPLETED_JOB_CANNOT_BE_CANCELLED,
-      );
-    }).toThrow(ConflictException);
   });
 });

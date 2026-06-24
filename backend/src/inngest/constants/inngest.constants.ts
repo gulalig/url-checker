@@ -1,3 +1,7 @@
+export const INNGEST_CLIENT = {
+  ID: 'url-checker',
+} as const;
+
 export const INNGEST_FUNCTION = {
   CHECK_URL_ID: 'check-url',
   CHECK_URL_NAME: 'Check URL',

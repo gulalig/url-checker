@@ -3,7 +3,3 @@ export interface UrlCheckRequestedEventData {
   urlCheckId: string;
   url: string;
 }
-
-export interface JobCancelledEventData {
-  jobId: string;
-}

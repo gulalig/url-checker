@@ -71,6 +71,7 @@ Before committing backend changes, run:
 
 ```bash
 npm run test
+npm run test:e2e
 npm run lint
 npm run build
 ```
