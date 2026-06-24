@@ -35,4 +35,5 @@ export const CREATE_JOB_FORM_VALIDATION_MESSAGE = {
   URLS_REQUIRED: 'Please enter at least one URL.',
   URL_INVALID:
     'Each URL must be valid and include http:// or https://. Put each URL on a new line.',
+  URL_DUPLICATE: 'Duplicate URLs are not allowed.',
 } as const;

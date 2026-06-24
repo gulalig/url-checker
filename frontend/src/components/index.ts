@@ -11,6 +11,8 @@ export {
   Stack,
   TextField,
   Typography,
+  Tab,
+  Tabs,
 } from '@mui/material';
 
 export type {
@@ -26,6 +28,8 @@ export type {
   StackProps,
   TextFieldProps,
   TypographyProps,
+  TabProps,
+  TabsProps,
 } from '@mui/material';
 
 export { PageHeader } from './PageHeader';

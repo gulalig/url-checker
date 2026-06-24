@@ -21,7 +21,11 @@ import {
 } from './styles';
 import { JobListItem } from "../JobListItem";
 
-export const JobsList: FC = () => {
+type JobsListProps = {
+  onJobSelected?: () => void;
+};
+
+export const JobsList: FC<JobsListProps> = ({ onJobSelected }) => {
   const dispatch = useAppDispatch();
   const jobs = useAppSelector(selectJobs);
   const activeJobId = useAppSelector(selectActiveJobId);
@@ -39,6 +43,7 @@ export const JobsList: FC = () => {
   const handleSelectJob = (jobId: string): void => {
     dispatch(setActiveJobId(jobId));
     void dispatch(fetchJobDetails(jobId));
+    onJobSelected?.();
   };
 
   return (

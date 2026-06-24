@@ -10,3 +10,5 @@ export {
 } from './jobs.constants';
 
 export { API_ENDPOINTS } from './api.constants';
+
+export { DASHBOARD_TAB_LABEL, DASHBOARD_TAB_VALUE } from './tabs.constants';
