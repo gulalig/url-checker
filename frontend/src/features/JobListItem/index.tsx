@@ -48,11 +48,13 @@ export const JobListItem: FC<JobListItemProps> = ({ job, isActive, onSelect }) =
     minute: '2-digit',
   });
 
+  const getJobDisplayId = (id: string): string => `Job #${id.slice(0, 8)}`;
+
   return (
     <JobItemButton isActive={isActive} onClick={() => onSelect(job.id)}>
       <JobItemTop>
         <JobInfo>
-          <JobId>{job.id}</JobId>
+          <JobId title={job.id}>{getJobDisplayId(job.id)}</JobId>
           <JobDate>{formattedDate}</JobDate>
         </JobInfo>
 
