@@ -44,8 +44,9 @@ POST   /api/jobs
 GET    /api/jobs
 GET    /api/jobs/:id
 DELETE /api/jobs/:id
-Quality checks
 ```
+Quality checks
+
 Backend:
 ```bash
 cd backend
