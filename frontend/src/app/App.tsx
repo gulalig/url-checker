@@ -1,6 +1,6 @@
 import { PageHeader } from '@/components';
 import { Layout } from "@/shared/Layout";
-import { CreateJobForm } from "@/features";
+import { CreateJobForm, JobsList } from "@/features";
 
 export const App = () => (
   <Layout>
@@ -9,5 +9,6 @@ export const App = () => (
       description="Create asynchronous URL checking jobs, track their progress and inspect per-URL results."
     />
     <CreateJobForm />
+    <JobsList />
   </Layout>
 );

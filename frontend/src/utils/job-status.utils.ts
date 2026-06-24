@@ -6,3 +6,6 @@ export const isFinalJobStatus = (status: JobStatus): boolean =>
 
 export const isFinalUrlCheckStatus = (status: UrlCheckStatus): boolean =>
   FINAL_URL_CHECK_STATUSES.includes(status);
+
+export const getJobStatusLabel = (status: JobStatus): string =>
+  status.replace('_', ' ');
