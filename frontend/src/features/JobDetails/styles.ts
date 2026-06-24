@@ -1,5 +1,5 @@
 import { styled } from '@mui/material/styles';
-import { Chip, Typography, Box, Grid } from '@/components';
+import { Chip, Typography, Box, Grid, Button } from '@/components';
 
 export const DetailsRoot = styled(Grid)(({ theme }) => ({
   display: 'flex',
@@ -85,4 +85,23 @@ export const StatValue = styled('strong')(({ theme }) => ({
   color: theme.palette.text.primary,
   fontSize: '1.25rem',
   fontWeight: 800,
+}));
+
+export const DetailsActions = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(1),
+}));
+
+export const CancelButton = styled(Button)(({ theme }) => ({
+  minWidth: 140,
+  paddingInline: theme.spacing(2),
+  fontWeight: 700,
+}));
+
+export const DetailsError = styled('p')(({ theme }) => ({
+  margin: 0,
+  color: theme.palette.error.main,
+  fontSize: theme.typography.body2.fontSize,
+  fontWeight: 700,
 }));

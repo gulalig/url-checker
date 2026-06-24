@@ -1,15 +1,23 @@
 import type { FC } from 'react';
-import { JobProgress, UrlChecksTable } from '@/features';
-import { useAppSelector } from '@/hooks';
+import { useAppDispatch, useAppSelector, useJobPolling } from '@/hooks';
 import {
+  cancelJob,
+  fetchJobDetails,
+  fetchJobs,
   selectActiveJobDetails,
   selectActiveJobId,
+  selectCancelJobLoading,
   selectJobDetailsLoading,
+  selectJobsError,
 } from '@/store';
 import type { JobStatus } from '@/types';
-import { getJobStatusLabel } from '@/utils';
+import { getJobStatusLabel, isFinalJobStatus } from '@/utils';
+import { UrlChecksTable, JobProgress } from '@/features';
 import {
+  CancelButton,
+  DetailsActions,
   DetailsEmptyState,
+  DetailsError,
   DetailsHeader,
   DetailsId,
   DetailsRoot,
@@ -24,6 +32,7 @@ import {
 
 type StatusChipColor = 'default' | 'primary' | 'success' | 'error' | 'warning';
 
+//TODO: will move
 const getStatusColor = (status: JobStatus): StatusChipColor => {
   if (status === 'completed') {
     return 'success';
@@ -45,9 +54,40 @@ const getStatusColor = (status: JobStatus): StatusChipColor => {
 };
 
 export const JobDetails: FC = () => {
+  const dispatch = useAppDispatch();
   const activeJobId = useAppSelector(selectActiveJobId);
   const details = useAppSelector(selectActiveJobDetails);
-  const isLoading = useAppSelector(selectJobDetailsLoading);
+  const isDetailsLoading = useAppSelector(selectJobDetailsLoading);
+  const isCancelLoading = useAppSelector(selectCancelJobLoading);
+  const error = useAppSelector(selectJobsError);
+
+  const canPoll =
+    activeJobId !== null &&
+    (details === null || !isFinalJobStatus(details.status));
+
+  const canCancel =
+    activeJobId !== null &&
+    details !== null &&
+    !isFinalJobStatus(details.status);
+
+  useJobPolling({
+    jobId: activeJobId,
+    enabled: canPoll,
+  });
+
+  const handleCancel = async (): Promise<void> => {
+    if (!activeJobId || !canCancel) {
+      return;
+    }
+
+    try {
+      await dispatch(cancelJob(activeJobId)).unwrap();
+      await dispatch(fetchJobs()).unwrap();
+      await dispatch(fetchJobDetails(activeJobId)).unwrap();
+    } catch {
+      // Error state is handled by Redux slice.
+    }
+  };
 
   if (!activeJobId) {
     return (
@@ -60,7 +100,9 @@ export const JobDetails: FC = () => {
   if (!details) {
     return (
       <DetailsEmptyState>
-        {isLoading ? 'Loading job details...' : 'Job details are not loaded yet.'}
+        {isDetailsLoading
+          ? 'Loading job details...'
+          : 'Job details are not loaded yet.'}
       </DetailsEmptyState>
     );
   }
@@ -73,11 +115,25 @@ export const JobDetails: FC = () => {
           <DetailsId>{details.id}</DetailsId>
         </DetailsTitleGroup>
 
-        <DetailsStatusChip
-          color={getStatusColor(details.status)}
-          label={getJobStatusLabel(details.status)}
-        />
+        <DetailsActions>
+          <DetailsStatusChip
+            color={getStatusColor(details.status)}
+            label={getJobStatusLabel(details.status)}
+          />
+
+          <CancelButton
+            color="error"
+            disabled={!canCancel || isCancelLoading}
+            onClick={handleCancel}
+            type="button"
+            variant="outlined"
+          >
+            {isCancelLoading ? 'Cancelling...' : 'Cancel job'}
+          </CancelButton>
+        </DetailsActions>
       </DetailsHeader>
+
+      {error && <DetailsError>{error}</DetailsError>}
 
       <JobProgress processed={details.processed} total={details.total} />
 

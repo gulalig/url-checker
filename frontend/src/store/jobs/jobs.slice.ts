@@ -5,7 +5,7 @@ import {
   createJob,
   fetchJobDetails,
   fetchJobs,
-} from './jobs.thunks';
+} from '@/store';
 
 type JobsState = {
   items: JobSummary[];
@@ -98,17 +98,20 @@ const jobsSlice = createSlice({
         state.error = action.payload ?? 'Failed to create job';
       })
 
-      .addCase(fetchJobDetails.pending, (state) => {
+      .addCase(fetchJobDetails.pending, (state, action) => {
+        if (state.activeJobId !== action.meta.arg) {
+          return;
+        }
+
         state.isDetailsLoading = true;
         state.error = null;
       })
       .addCase(fetchJobDetails.fulfilled, (state, action) => {
-        state.isDetailsLoading = false;
-
         if (state.activeJobId !== action.payload.id) {
           return;
         }
 
+        state.isDetailsLoading = false;
         state.activeJobDetails = action.payload;
         state.items = upsertJobSummary(
           state.items,
@@ -116,6 +119,10 @@ const jobsSlice = createSlice({
         );
       })
       .addCase(fetchJobDetails.rejected, (state, action) => {
+        if (state.activeJobId !== action.meta.arg) {
+          return;
+        }
+
         state.isDetailsLoading = false;
         state.error = action.payload ?? 'Failed to load job details';
       })
