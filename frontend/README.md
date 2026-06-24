@@ -74,6 +74,7 @@ http://localhost:3000/api/jobs
 ## Installation
 
 ```bash
+cd frontend
 npm install
 ```
 

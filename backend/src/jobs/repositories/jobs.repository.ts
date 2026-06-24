@@ -8,6 +8,22 @@ import { CreateJobData, Job, UrlCheck } from '../interfaces/job.interface';
 export class JobsRepository {
   private readonly jobs = new Map<string, Job>();
 
+  private isTerminalJobStatus(status: JobStatus): boolean {
+    return [
+      JobStatus.Completed,
+      JobStatus.Cancelled,
+      JobStatus.Failed,
+    ].includes(status);
+  }
+
+  private isFinalUrlCheckStatus(status: UrlCheckStatus): boolean {
+    return [
+      UrlCheckStatus.Success,
+      UrlCheckStatus.Error,
+      UrlCheckStatus.Cancelled,
+    ].includes(status);
+  }
+
   create(data: CreateJobData): Job {
     const jobId = randomUUID();
 
@@ -83,32 +99,46 @@ export class JobsRepository {
   markUrlInProgress(jobId: string, urlCheckId: string): UrlCheck | undefined {
     const job = this.findById(jobId);
 
-    if (!job || job.status === JobStatus.Cancelled) {
+    if (!job || this.isTerminalJobStatus(job.status)) {
       return undefined;
     }
 
     const startedAt = new Date().toISOString();
     let updatedUrlCheck: UrlCheck | undefined;
 
-    const updatedJob: Job = {
+    const updatedUrls = job.urls.map((urlCheck) => {
+      if (urlCheck.id !== urlCheckId) {
+        return urlCheck;
+      }
+
+      if (this.isFinalUrlCheckStatus(urlCheck.status)) {
+        return urlCheck;
+      }
+
+      if (urlCheck.status === UrlCheckStatus.InProgress) {
+        updatedUrlCheck = urlCheck;
+
+        return urlCheck;
+      }
+
+      updatedUrlCheck = {
+        ...urlCheck,
+        status: UrlCheckStatus.InProgress,
+        startedAt,
+      };
+
+      return updatedUrlCheck;
+    });
+
+    if (!updatedUrlCheck) {
+      return undefined;
+    }
+
+    this.save({
       ...job,
       status: JobStatus.InProgress,
-      urls: job.urls.map((urlCheck) => {
-        if (urlCheck.id !== urlCheckId) {
-          return urlCheck;
-        }
-
-        updatedUrlCheck = {
-          ...urlCheck,
-          status: UrlCheckStatus.InProgress,
-          startedAt,
-        };
-
-        return updatedUrlCheck;
-      }),
-    };
-
-    this.save(updatedJob);
+      urls: updatedUrls,
+    });
 
     return updatedUrlCheck;
   }
@@ -120,30 +150,40 @@ export class JobsRepository {
   ): UrlCheck | undefined {
     const job = this.findById(jobId);
 
-    if (!job || job.status === JobStatus.Cancelled) {
+    if (!job || this.isTerminalJobStatus(job.status)) {
       return undefined;
     }
 
     const finishedAt = new Date().toISOString();
     let updatedUrlCheck: UrlCheck | undefined;
 
+    const updatedUrls = job.urls.map((urlCheck) => {
+      if (urlCheck.id !== urlCheckId) {
+        return urlCheck;
+      }
+
+      if (this.isFinalUrlCheckStatus(urlCheck.status)) {
+        return urlCheck;
+      }
+
+      updatedUrlCheck = {
+        ...urlCheck,
+        status: UrlCheckStatus.Success,
+        httpStatus,
+        finishedAt,
+        durationMs: this.calculateDurationMs(urlCheck.startedAt, finishedAt),
+      };
+
+      return updatedUrlCheck;
+    });
+
+    if (!updatedUrlCheck) {
+      return undefined;
+    }
+
     const updatedJob: Job = {
       ...job,
-      urls: job.urls.map((urlCheck) => {
-        if (urlCheck.id !== urlCheckId) {
-          return urlCheck;
-        }
-
-        updatedUrlCheck = {
-          ...urlCheck,
-          status: UrlCheckStatus.Success,
-          httpStatus,
-          finishedAt,
-          durationMs: this.calculateDurationMs(urlCheck.startedAt, finishedAt),
-        };
-
-        return updatedUrlCheck;
-      }),
+      urls: updatedUrls,
     };
 
     this.save(this.recalculateJobStatus(updatedJob));
@@ -155,33 +195,45 @@ export class JobsRepository {
     jobId: string,
     urlCheckId: string,
     error: string,
+    httpStatus?: number,
   ): UrlCheck | undefined {
     const job = this.findById(jobId);
 
-    if (!job || job.status === JobStatus.Cancelled) {
+    if (!job || this.isTerminalJobStatus(job.status)) {
       return undefined;
     }
 
     const finishedAt = new Date().toISOString();
     let updatedUrlCheck: UrlCheck | undefined;
 
+    const updatedUrls = job.urls.map((urlCheck) => {
+      if (urlCheck.id !== urlCheckId) {
+        return urlCheck;
+      }
+
+      if (this.isFinalUrlCheckStatus(urlCheck.status)) {
+        return urlCheck;
+      }
+
+      updatedUrlCheck = {
+        ...urlCheck,
+        status: UrlCheckStatus.Error,
+        httpStatus,
+        error,
+        finishedAt,
+        durationMs: this.calculateDurationMs(urlCheck.startedAt, finishedAt),
+      };
+
+      return updatedUrlCheck;
+    });
+
+    if (!updatedUrlCheck) {
+      return undefined;
+    }
+
     const updatedJob: Job = {
       ...job,
-      urls: job.urls.map((urlCheck) => {
-        if (urlCheck.id !== urlCheckId) {
-          return urlCheck;
-        }
-
-        updatedUrlCheck = {
-          ...urlCheck,
-          status: UrlCheckStatus.Error,
-          error,
-          finishedAt,
-          durationMs: this.calculateDurationMs(urlCheck.startedAt, finishedAt),
-        };
-
-        return updatedUrlCheck;
-      }),
+      urls: updatedUrls,
     };
 
     this.save(this.recalculateJobStatus(updatedJob));
@@ -189,19 +241,45 @@ export class JobsRepository {
     return updatedUrlCheck;
   }
 
+  fail(jobId: string, error: string): Job | undefined {
+    const job = this.findById(jobId);
+
+    if (!job || this.isTerminalJobStatus(job.status)) {
+      return undefined;
+    }
+
+    const finishedAt = new Date().toISOString();
+
+    const failedJob: Job = {
+      ...job,
+      status: JobStatus.Failed,
+      urls: job.urls.map((urlCheck) => {
+        if (this.isFinalUrlCheckStatus(urlCheck.status)) {
+          return urlCheck;
+        }
+
+        return {
+          ...urlCheck,
+          status: UrlCheckStatus.Error,
+          error,
+          finishedAt,
+          durationMs: this.calculateDurationMs(urlCheck.startedAt, finishedAt),
+        };
+      }),
+    };
+
+    this.jobs.set(failedJob.id, failedJob);
+
+    return failedJob;
+  }
+
   private recalculateJobStatus(job: Job): Job {
     if (job.status === JobStatus.Cancelled || job.status === JobStatus.Failed) {
       return job;
     }
 
-    const finalStatuses = [
-      UrlCheckStatus.Success,
-      UrlCheckStatus.Error,
-      UrlCheckStatus.Cancelled,
-    ];
-
     const isCompleted = job.urls.every((urlCheck) =>
-      finalStatuses.includes(urlCheck.status),
+      this.isFinalUrlCheckStatus(urlCheck.status),
     );
 
     return {

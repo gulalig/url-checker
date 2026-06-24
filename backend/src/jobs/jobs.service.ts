@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateJobDto } from './dto/create-job.dto';
@@ -43,24 +44,45 @@ export class JobsService {
       LOGGER_MESSAGES.JOB_CREATED,
     );
 
-    await inngest.send(
-      job.urls.map((urlCheck) => ({
-        name: InngestEventName.UrlCheckRequested,
-        data: {
-          jobId: job.id,
-          urlCheckId: urlCheck.id,
-          url: urlCheck.url,
-        },
-      })),
-    );
+    try {
+      await inngest.send(
+        job.urls.map((urlCheck) => ({
+          name: InngestEventName.UrlCheckRequested,
+          data: {
+            jobId: job.id,
+            urlCheckId: urlCheck.id,
+            url: urlCheck.url,
+          },
+        })),
+      );
 
-    this.logger.info(
-      {
-        jobId: job.id,
-        totalEvents: job.urls.length,
-      },
-      LOGGER_MESSAGES.URL_CHECK_EVENTS_SENT_TO_INNGEST,
-    );
+      this.logger.info(
+        {
+          jobId: job.id,
+          totalUrls: job.urls.length,
+        },
+        LOGGER_MESSAGES.URL_CHECK_EVENTS_SENT_TO_INNGEST,
+      );
+    } catch (error) {
+      const errorMessage = this.getErrorMessage(error);
+
+      this.jobsRepository.fail(
+        job.id,
+        ERROR_MESSAGES.URL_CHECK_EVENT_DISPATCH_FAILED,
+      );
+
+      this.logger.error(
+        {
+          jobId: job.id,
+          error: errorMessage,
+        },
+        LOGGER_MESSAGES.URL_CHECK_EVENTS_SEND_FAILED,
+      );
+
+      throw new InternalServerErrorException(
+        ERROR_MESSAGES.URL_CHECK_EVENT_DISPATCH_FAILED,
+      );
+    }
 
     return {
       jobId: job.id,
@@ -98,7 +120,7 @@ export class JobsService {
           jobId,
           status: job.status,
         },
-        LOGGER_MESSAGES.FAILED_JOB_CANCELLATION_REJECTED,
+        LOGGER_MESSAGES.COMPLETED_JOB_CANCELLATION_REJECTED,
       );
 
       throw new ConflictException(
@@ -168,14 +190,20 @@ export class JobsService {
     );
   }
 
-  saveUrlError(jobId: string, urlCheckId: string, error: string): void {
-    this.jobsRepository.saveUrlError(jobId, urlCheckId, error);
+  saveUrlError(
+    jobId: string,
+    urlCheckId: string,
+    error: string,
+    httpStatus?: number,
+  ): void {
+    this.jobsRepository.saveUrlError(jobId, urlCheckId, error, httpStatus);
 
     this.logger.debug(
       {
         jobId,
         urlCheckId,
         error,
+        httpStatus,
       },
       LOGGER_MESSAGES.URL_CHECK_SAVED_AS_ERROR,
     );
@@ -185,5 +213,13 @@ export class JobsService {
     const job = this.jobsRepository.findById(jobId);
 
     return job?.status === JobStatus.Cancelled;
+  }
+
+  private getErrorMessage(error: unknown): string {
+    if (error instanceof Error) {
+      return error.message;
+    }
+
+    return ERROR_MESSAGES.UNKNOWN_ERROR;
   }
 }

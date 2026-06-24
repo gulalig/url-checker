@@ -108,13 +108,15 @@ More details are available in:
 docs/api.md
 ```
 
-## Tests
-
 Run all backend tests:
 
 ```bash
 cd backend
 npm run test
+```
+Run API e2e tests only:
+```bash
+npm run test:e2e
 ```
 
 Run lint:
