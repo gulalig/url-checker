@@ -6,7 +6,7 @@ type PinoRequest = IncomingMessage & {
   id?: string | number;
 };
 
-const isProduction = process.env.NODE_ENV === 'production';
+const shouldUsePrettyLogs = process.env.LOG_PRETTY === 'true';
 
 @Global()
 @Module({
@@ -19,7 +19,7 @@ const isProduction = process.env.NODE_ENV === 'production';
         },
       ],
       pinoHttp: {
-        level: process.env.LOG_LEVEL ?? (isProduction ? 'info' : 'debug'),
+        level: process.env.LOG_LEVEL ?? 'debug',
         autoLogging: {
           ignore: (request: IncomingMessage) =>
             request.url?.startsWith('/api/inngest') ?? false,
@@ -34,17 +34,19 @@ const isProduction = process.env.NODE_ENV === 'production';
             statusCode: response.statusCode,
           }),
         },
-        transport: isProduction
-          ? undefined
-          : {
-              target: 'pino-pretty',
-              options: {
-                colorize: true,
-                singleLine: true,
-                translateTime: 'SYS:yyyy-mm-dd HH:MM:ss.l',
-                ignore: 'pid,hostname',
+        ...(shouldUsePrettyLogs
+          ? {
+              transport: {
+                target: 'pino-pretty',
+                options: {
+                  colorize: true,
+                  singleLine: true,
+                  translateTime: 'SYS:yyyy-mm-dd HH:MM:ss.l',
+                  ignore: 'pid,hostname',
+                },
               },
-            },
+            }
+          : {}),
       },
     }),
   ],

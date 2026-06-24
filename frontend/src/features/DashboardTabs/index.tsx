@@ -26,11 +26,14 @@ export const DashboardTabs: FC = () => {
 
   const activeJobDetails = useAppSelector(selectActiveJobDetails);
 
+  const isJobDetailsTabActive = activeTab === DASHBOARD_TAB_VALUE.JOB_DETAILS;
+
   useJobPolling({
     jobId: activeJobId,
     enabled:
-      activeJobId !== null &&
-      (activeJobDetails === null || !isFinalJobStatus(activeJobDetails.status)),
+        isJobDetailsTabActive &&
+        activeJobId !== null &&
+        (activeJobDetails === null || !isFinalJobStatus(activeJobDetails.status)),
   });
 
   const handleTabChange = (

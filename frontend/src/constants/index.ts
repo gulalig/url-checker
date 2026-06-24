@@ -10,6 +10,7 @@ export {
   URL_CHECK_FILTER_COPY,
   URL_CHECK_STATUS_FILTER,
   URL_CHECK_STATUS_FILTER_OPTIONS,
+  CREATE_JOB_FORM_FIELD_ID
 } from './jobs.constants';
 
 export { API_ENDPOINTS } from './api.constants';
@@ -19,7 +20,6 @@ export { DASHBOARD_TAB_LABEL, DASHBOARD_TAB_VALUE, JOBS_PER_PAGE, URLS_PER_PAGE 
 export { BUTTON_LABEL } from './ui.constants';
 
 export {
-  APP_COPY,
   ERROR_MESSAGE,
   FALLBACK_TEXT,
   JOB_DETAILS_COPY,

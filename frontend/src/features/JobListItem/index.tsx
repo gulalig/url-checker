@@ -10,7 +10,7 @@ import {
   JobInfo,
 } from './styles';
 import type { JobSummary } from '@/types';
-import { formatDateTime, getJobStatusLabel, getStatusChipColor } from '@/utils';
+import { formatShortDateTime, getJobStatusLabel, getStatusChipColor } from '@/utils';
 
 type JobListItemProps = {
   job: JobSummary;
@@ -19,7 +19,7 @@ type JobListItemProps = {
 };
 
 export const JobListItem: FC<JobListItemProps> = ({ job, isActive, onSelect }) => {
-  const formattedDate = formatDateTime(job.createdAt);
+  const formattedDate = formatShortDateTime(job.createdAt);
 
   const getJobDisplayId = (id: string): string =>
     `Job #${id.slice(0, 8)}`;

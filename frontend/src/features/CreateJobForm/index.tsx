@@ -7,17 +7,21 @@ import {
   CREATE_JOB_FORM_FIELD,
   CREATE_JOB_FORM_LABEL,
   CREATE_JOB_FORM_PLACEHOLDER,
+  CREATE_JOB_FORM_FIELD_ID
 } from '@/constants';
 import { createJobSchema } from '@/schemas';
 import type { CreateJobFormValues } from '@/types';
 import { parseUrlsInput } from '@/utils';
 import {
-  FormActions, FormHeader, FormLabelGroup,
+  FormActions,
+  FormHeader,
+  FormLabelGroup,
   FormRoot,
   SubmitButton,
-  UrlsTextarea
+  UrlsTextarea,
+  FieldErrorText,
 } from './styles';
-import { createJob, fetchJobDetails, fetchJobs, selectCreateJobLoading } from "@/store";
+import { createJob, selectCreateJobLoading } from "@/store";
 import { useAppDispatch, useAppSelector } from "@/hooks";
 import { ButtonContent, HelpTooltip } from "@/components";
 
@@ -43,17 +47,13 @@ export const CreateJobForm: FC<CreateJobFormProps> = ({ onJobCreated }) => {
 
   const onSubmitForm = async (values: CreateJobFormValues): Promise<void> => {
     try {
-      const response = await dispatch(
-        createJob({
-          urls: parseUrlsInput(values.urls),
-        }),
+      await dispatch(
+          createJob({
+            urls: parseUrlsInput(values.urls),
+          }),
       ).unwrap();
 
-      await dispatch(fetchJobs()).unwrap();
-
       onJobCreated?.();
-
-      await dispatch(fetchJobDetails(response.jobId)).unwrap();
 
       reset(CREATE_JOB_FORM_DEFAULT_VALUES);
     } catch (error) {
@@ -85,17 +85,27 @@ export const CreateJobForm: FC<CreateJobFormProps> = ({ onJobCreated }) => {
         control={control}
         name={CREATE_JOB_FORM_FIELD.URLS}
         render={({ field }) => (
-          <UrlsTextarea
-            {...field}
-            disabled={isCreateLoading}
-            error={Boolean(errors.urls)}
-            fullWidth
-            helperText={errors.urls?.message}
-            label={CREATE_JOB_FORM_LABEL.URLS}
-            minRows={6}
-            multiline
-            placeholder={CREATE_JOB_FORM_PLACEHOLDER.URLS}
-          />
+            <>
+              <UrlsTextarea
+                  {...field}
+                  id={CREATE_JOB_FORM_FIELD_ID.URLS}
+                  name={CREATE_JOB_FORM_FIELD.URLS}
+                  disabled={isCreateLoading}
+                  hasError={Boolean(errors.urls)}
+                  rows={6}
+                  aria-invalid={Boolean(errors.urls)}
+                  aria-describedby={
+                    errors.urls ? `${CREATE_JOB_FORM_FIELD_ID.URLS}-error` : undefined
+                  }
+                  placeholder={CREATE_JOB_FORM_PLACEHOLDER.URLS}
+              />
+
+              {errors.urls?.message && (
+                  <FieldErrorText id={`${CREATE_JOB_FORM_FIELD_ID.URLS}-error`}>
+                    {errors.urls.message}
+                  </FieldErrorText>
+              )}
+            </>
         )}
       />
 

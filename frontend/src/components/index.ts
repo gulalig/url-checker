@@ -34,7 +34,6 @@ export type {
   TooltipProps,
 } from '@mui/material';
 
-export { PageHeader } from './PageHeader';
 export { PaginationControls } from './PaginationControls';
 export { HelpTooltip } from './HelpTooltip';
 export { ButtonContent } from './ButtonContent';

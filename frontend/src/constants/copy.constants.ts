@@ -1,9 +1,3 @@
-export const APP_COPY = {
-  TITLE: 'URL Checker',
-  DESCRIPTION:
-    'Create asynchronous URL checking jobs, track their progress and inspect per-URL results.',
-} as const;
-
 export const JOBS_LIST_COPY = {
   TITLE: 'Jobs',
   LOADING: 'Loading jobs...',
