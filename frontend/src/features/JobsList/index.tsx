@@ -2,7 +2,6 @@ import {type FC, useEffect, useMemo, useState} from 'react';
 import { ButtonContent, CircularProgress, PaginationControls } from '@/components';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import {
-  fetchJobDetails,
   fetchJobs,
   selectActiveJobId,
   selectJobs,
@@ -20,7 +19,7 @@ import {
   RefreshButton,
 } from './styles';
 import { JobListItem } from '@/features';
-import {BUTTON_LABEL, JOBS_LIST_COPY, JOBS_PER_PAGE} from '@/constants';
+import { BUTTON_LABEL, JOBS_LIST_COPY, JOBS_PER_PAGE } from '@/constants';
 
 type JobsListProps = {
   onJobSelected?: () => void;
@@ -53,7 +52,6 @@ export const JobsList: FC<JobsListProps> = ({ onJobSelected }) => {
 
   const handleSelectJob = (jobId: string): void => {
     dispatch(setActiveJobId(jobId));
-    void dispatch(fetchJobDetails(jobId));
     onJobSelected?.();
   };
 

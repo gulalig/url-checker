@@ -24,10 +24,12 @@ interface CreateCheckUrlFunctionDependencies {
   logger: PinoLogger;
 }
 
+type CheckUrlFunction = ReturnType<typeof inngest.createFunction>;
+
 export const createCheckUrlFunction = ({
   jobsService,
   logger,
-}: CreateCheckUrlFunctionDependencies) =>
+}: CreateCheckUrlFunctionDependencies): CheckUrlFunction =>
   inngest.createFunction(
     {
       id: INNGEST_FUNCTION.CHECK_URL_ID,

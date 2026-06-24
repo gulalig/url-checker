@@ -1,5 +1,9 @@
 import { styled } from '@mui/material/styles';
-import { Button, TextField, Box } from '@/components';
+import { Button, Box } from '@/components';
+
+type UrlsTextareaProps = {
+  hasError?: boolean;
+};
 
 export const FormRoot = styled('form')(({ theme }) => ({
   display: 'flex',
@@ -22,11 +26,44 @@ export const FormLabelGroup = styled(Box)(({ theme }) => ({
   fontWeight: 700,
 }));
 
-export const UrlsTextarea = styled(TextField)(() => ({
-  '& textarea': {
-    fontFamily:
-      'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace',
+export const UrlsTextarea = styled('textarea', {
+  shouldForwardProp: (prop) => prop !== 'hasError',
+})<UrlsTextareaProps>(({ theme, hasError }) => ({
+  width: '100%',
+  minHeight: 144,
+  padding: theme.spacing(2),
+  borderRadius: theme.shape.borderRadius,
+  border: `1px solid ${
+      hasError ? theme.palette.error.main : theme.palette.divider
+  }`,
+  backgroundColor: theme.palette.background.paper,
+  color: theme.palette.text.primary,
+  fontSize: 14,
+  lineHeight: 1.5,
+  resize: 'vertical',
+  outline: 'none',
+
+  '&::placeholder': {
+    color: theme.palette.text.secondary,
+    opacity: 0.8,
   },
+
+  '&:focus': {
+    borderColor: hasError
+        ? theme.palette.error.main
+        : theme.palette.primary.main,
+  },
+
+  '&:disabled': {
+    backgroundColor: theme.palette.action.disabledBackground,
+    cursor: 'not-allowed',
+  },
+}));
+
+export const FieldErrorText = styled('p')(({ theme }) => ({
+  margin: theme.spacing(0.75, 0, 0),
+  color: theme.palette.error.main,
+  fontSize: 12,
 }));
 
 export const FormActions = styled(Box)(() => ({

@@ -60,3 +60,7 @@ export const URL_CHECK_FILTER_COPY = {
   ALL: 'All',
   EMPTY: 'No URL checks match the selected filter.',
 } as const;
+
+export const CREATE_JOB_FORM_FIELD_ID = {
+  URLS: 'create-job-urls',
+} as const;
