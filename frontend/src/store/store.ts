@@ -1,10 +1,9 @@
 import { configureStore } from '@reduxjs/toolkit';
-
-const appReducer = (state: Record<string, never> = {}) => state;
+import { jobsReducer } from '@/store/jobs';
 
 export const store = configureStore({
   reducer: {
-    app: appReducer,
+    jobs: jobsReducer,
   },
 });
 

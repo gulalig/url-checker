@@ -1,7 +1,5 @@
+import { isHttpClientError } from '@/services';
 import type { ApiErrorResponse } from '@/types';
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null;
 
 const getApiMessage = (message: string | string[] | undefined): string | null => {
   if (Array.isArray(message)) {
@@ -12,12 +10,15 @@ const getApiMessage = (message: string | string[] | undefined): string | null =>
 };
 
 export const extractErrorMessage = (error: unknown): string => {
-  if (isRecord(error) && isRecord(error.response)) {
-    const data = error.response.data as ApiErrorResponse | undefined;
-    const apiMessage = getApiMessage(data?.message);
+  if (isHttpClientError<ApiErrorResponse>(error)) {
+    const apiMessage = getApiMessage(error.response?.data.message);
 
     if (apiMessage) {
       return apiMessage;
+    }
+
+    if (error.message) {
+      return error.message;
     }
   }
 

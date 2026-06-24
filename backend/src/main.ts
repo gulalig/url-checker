@@ -9,6 +9,15 @@ import { InngestFunctionsService } from './inngest/inngest-functions.service';
 import { inngest } from './inngest/inngest.client';
 import { LOGGER_MESSAGES } from './logger/constants/logger-messages.constant';
 
+const getAllowedOrigins = (): string[] => {
+  const frontendOrigin = process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173';
+
+  return frontendOrigin
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+};
+
 const bootstrap = async (): Promise<void> => {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bodyParser: true,
@@ -18,6 +27,12 @@ const bootstrap = async (): Promise<void> => {
   const logger = app.get(Logger);
 
   app.useLogger(logger);
+
+  app.enableCors({
+    origin: getAllowedOrigins(),
+    methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
 
   app.setGlobalPrefix('api');
 

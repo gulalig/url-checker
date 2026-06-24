@@ -11,35 +11,59 @@ import { createJobSchema } from '@/schemas';
 import type { CreateJobFormValues } from '@/types';
 import { parseUrlsInput } from '@/utils';
 import { FormActions, FormRoot, SubmitButton, UrlsTextarea } from './styles';
+import { createJob, fetchJobDetails, fetchJobs, selectCreateJobLoading } from "@/store";
+import { useAppDispatch, useAppSelector } from "@/hooks";
 
 export const CreateJobForm: FC = () => {
+  const dispatch = useAppDispatch();
+  const isCreateLoading = useAppSelector(selectCreateJobLoading);
+
   const {
     control,
     formState: { errors, isValid },
     handleSubmit,
     reset,
+    setError,
   } = useForm<CreateJobFormValues>({
     defaultValues: CREATE_JOB_FORM_DEFAULT_VALUES,
     mode: 'onChange',
     resolver: yupResolver(createJobSchema),
   });
 
-  const onSubmit = (values: CreateJobFormValues): void => {
-    const urls = parseUrlsInput(values.urls);
+  const onSubmitForm = async (values: CreateJobFormValues): Promise<void> => {
+    try {
+      const response = await dispatch(
+        createJob({
+          urls: parseUrlsInput(values.urls),
+        }),
+      ).unwrap();
 
-    console.log('Parsed URLs:', urls);
+      await dispatch(fetchJobs()).unwrap();
+      await dispatch(fetchJobDetails(response.jobId)).unwrap();
 
-    reset(CREATE_JOB_FORM_DEFAULT_VALUES);
+      reset(CREATE_JOB_FORM_DEFAULT_VALUES);
+    } catch (error) {
+      const message =
+        typeof error === 'string'
+          ? error
+          : 'Failed to create job. Please try again.';
+
+      setError(CREATE_JOB_FORM_FIELD.URLS, {
+        type: 'server',
+        message,
+      });
+    }
   };
 
   return (
-    <FormRoot noValidate onSubmit={handleSubmit(onSubmit)}>
+    <FormRoot noValidate onSubmit={handleSubmit(onSubmitForm)}>
       <Controller
         control={control}
         name={CREATE_JOB_FORM_FIELD.URLS}
         render={({ field }) => (
           <UrlsTextarea
             {...field}
+            disabled={isCreateLoading}
             error={Boolean(errors.urls)}
             fullWidth
             helperText={errors.urls?.message}
@@ -52,9 +76,15 @@ export const CreateJobForm: FC = () => {
       />
 
       <FormActions>
-        <SubmitButton disabled={!isValid} type="submit" variant="contained">
-          {CREATE_JOB_FORM_LABEL.SUBMIT}
-        </SubmitButton>
+        <FormActions>
+          <SubmitButton
+            disabled={!isValid || isCreateLoading}
+            type="submit"
+            variant="contained"
+          >
+            {isCreateLoading ? 'Starting...' : CREATE_JOB_FORM_LABEL.SUBMIT}
+          </SubmitButton>
+        </FormActions>
       </FormActions>
     </FormRoot>
   );
