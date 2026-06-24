@@ -6,6 +6,7 @@ import {
   ProgressValue,
   StyledProgress,
 } from './styles';
+import { HelpTooltip } from '@/components';
 
 type JobProgressProps = {
   processed: number;
@@ -18,9 +19,15 @@ export const JobProgress: FC<JobProgressProps> = ({ processed, total }) => {
   return (
     <ProgressRoot>
       <ProgressTop>
-        <ProgressTitle>Progress</ProgressTitle>
+        <ProgressTitle>
+          Progress
+          <HelpTooltip
+            ariaLabel="Progress help"
+            title='Shows how many URL checks are already finished, including success, error and cancelled results.'
+          />
+        </ProgressTitle>
         <ProgressValue>
-          {processed} of {total} processed · {progressValue}%
+          {processed} of {total} processed - {progressValue}%
         </ProgressValue>
       </ProgressTop>
 

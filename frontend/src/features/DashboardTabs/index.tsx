@@ -1,34 +1,37 @@
-import { type FC, type ReactNode, type SyntheticEvent, useState } from 'react';
+import { type FC, type SyntheticEvent, useState } from 'react';
 import { Tab } from '@/components';
 import { DASHBOARD_TAB_LABEL, DASHBOARD_TAB_VALUE } from '@/constants';
 import type { DashboardTabValue } from '@/types';
-import { JobsList, JobDetails, CreateJobForm } from '@/features';
+import {
+  JobsList,
+  JobDetails,
+  CreateJobForm,
+  TabPanel } from '@/features';
 import {
   DashboardTabsContent,
   DashboardTabsHeader,
   DashboardTabsRoot,
   StyledTabs,
-  TabPanelRoot,
 } from './styles';
-
-type TabPanelProps = {
-  activeValue: DashboardTabValue;
-  children: ReactNode;
-  value: DashboardTabValue;
-};
-
-const TabPanel: FC<TabPanelProps> = ({ activeValue, children, value }) => {
-  if (activeValue !== value) {
-    return null;
-  }
-
-  return <TabPanelRoot>{children}</TabPanelRoot>;
-};
+import { useAppSelector, useJobPolling } from '@/hooks';
+import { selectActiveJobDetails, selectActiveJobId } from '@/store';
+import { isFinalJobStatus } from '@/utils';
 
 export const DashboardTabs: FC = () => {
   const [activeTab, setActiveTab] = useState<DashboardTabValue>(
     DASHBOARD_TAB_VALUE.CREATE_JOB,
   );
+
+  const activeJobId = useAppSelector(selectActiveJobId);
+
+  const activeJobDetails = useAppSelector(selectActiveJobDetails);
+
+  useJobPolling({
+    jobId: activeJobId,
+    enabled:
+      activeJobId !== null &&
+      (activeJobDetails === null || !isFinalJobStatus(activeJobDetails.status)),
+  });
 
   const handleTabChange = (
     _: SyntheticEvent,
@@ -39,6 +42,10 @@ export const DashboardTabs: FC = () => {
 
   const handleJobSelected = (): void => {
     setActiveTab(DASHBOARD_TAB_VALUE.JOB_DETAILS);
+  };
+
+  const handleJobCreated = (): void => {
+    setActiveTab(DASHBOARD_TAB_VALUE.JOBS_LIST);
   };
 
   return (
@@ -69,7 +76,7 @@ export const DashboardTabs: FC = () => {
           activeValue={activeTab}
           value={DASHBOARD_TAB_VALUE.CREATE_JOB}
         >
-          <CreateJobForm />
+          <CreateJobForm onJobCreated={handleJobCreated} />
         </TabPanel>
 
         <TabPanel

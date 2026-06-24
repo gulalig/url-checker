@@ -20,6 +20,9 @@ export const ProgressTop = styled(Box)(({ theme }) => ({
 }));
 
 export const ProgressTitle = styled(Typography)(({ theme }) => ({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: theme.spacing(1),
   margin: 0,
   color: theme.palette.text.primary,
   fontSize: theme.typography.h3.fontSize,

@@ -9,3 +9,7 @@ export const DASHBOARD_TAB_LABEL = {
   JOBS_LIST: 'Jobs',
   JOB_DETAILS: 'Active job',
 } as const;
+
+export const JOBS_PER_PAGE = 4;
+
+export const URLS_PER_PAGE = 4;

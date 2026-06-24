@@ -13,6 +13,7 @@ export {
   Typography,
   Tab,
   Tabs,
+  Tooltip,
 } from '@mui/material';
 
 export type {
@@ -30,6 +31,10 @@ export type {
   TypographyProps,
   TabProps,
   TabsProps,
+  TooltipProps,
 } from '@mui/material';
 
 export { PageHeader } from './PageHeader';
+export { PaginationControls } from './PaginationControls';
+export { HelpTooltip } from './HelpTooltip';
+export { ButtonContent } from './ButtonContent';

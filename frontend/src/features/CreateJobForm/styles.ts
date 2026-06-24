@@ -7,6 +7,21 @@ export const FormRoot = styled('form')(({ theme }) => ({
   gap: theme.spacing(2),
 }));
 
+export const FormHeader = styled(Box)(() => ({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+}));
+
+export const FormLabelGroup = styled(Box)(({ theme }) => ({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: theme.spacing(1),
+  color: theme.palette.text.secondary,
+  fontSize: theme.typography.body2.fontSize,
+  fontWeight: 700,
+}));
+
 export const UrlsTextarea = styled(TextField)(() => ({
   '& textarea': {
     fontFamily:

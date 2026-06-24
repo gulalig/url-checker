@@ -52,7 +52,3 @@ export const DashboardTabsContent = styled(Box)(({ theme }) => ({
     padding: theme.spacing(2),
   },
 }));
-
-export const TabPanelRoot = styled(Box)(() => ({
-  width: '100%',
-}));

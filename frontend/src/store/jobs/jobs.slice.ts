@@ -6,6 +6,7 @@ import {
   fetchJobDetails,
   fetchJobs,
 } from '@/store';
+import { ERROR_MESSAGE } from '@/constants';
 
 type JobsState = {
   items: JobSummary[];
@@ -77,11 +78,12 @@ const jobsSlice = createSlice({
       })
       .addCase(fetchJobs.fulfilled, (state, action) => {
         state.isJobsLoading = false;
+        state.error = null;
         state.items = action.payload;
       })
       .addCase(fetchJobs.rejected, (state, action) => {
         state.isJobsLoading = false;
-        state.error = action.payload ?? 'Failed to load jobs';
+        state.error = action.payload ?? ERROR_MESSAGE.LOAD_JOBS_FAILED;
       })
 
       .addCase(createJob.pending, (state) => {
@@ -95,7 +97,7 @@ const jobsSlice = createSlice({
       })
       .addCase(createJob.rejected, (state, action) => {
         state.isCreateLoading = false;
-        state.error = action.payload ?? 'Failed to create job';
+        state.error = action.payload ?? ERROR_MESSAGE.CREATE_JOB_FAILED;
       })
 
       .addCase(fetchJobDetails.pending, (state, action) => {
@@ -112,6 +114,7 @@ const jobsSlice = createSlice({
         }
 
         state.isDetailsLoading = false;
+        state.error = null;
         state.activeJobDetails = action.payload;
         state.items = upsertJobSummary(
           state.items,
@@ -124,7 +127,7 @@ const jobsSlice = createSlice({
         }
 
         state.isDetailsLoading = false;
-        state.error = action.payload ?? 'Failed to load job details';
+        state.error = action.payload ?? ERROR_MESSAGE.LOAD_JOB_DETAILS_FAILED;
       })
 
       .addCase(cancelJob.pending, (state) => {
@@ -149,7 +152,7 @@ const jobsSlice = createSlice({
       })
       .addCase(cancelJob.rejected, (state, action) => {
         state.isCancelLoading = false;
-        state.error = action.payload ?? 'Failed to cancel job';
+        state.error = action.payload ?? ERROR_MESSAGE.CANCEL_JOB_FAILED;
       });
   },
 });

@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { useAppDispatch, useAppSelector, useJobPolling } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import {
   cancelJob,
   fetchJobDetails,
@@ -10,8 +10,7 @@ import {
   selectJobDetailsLoading,
   selectJobsError,
 } from '@/store';
-import type { JobStatus } from '@/types';
-import { getJobStatusLabel, isFinalJobStatus } from '@/utils';
+import { getJobStatusLabel, getStatusChipColor, isFinalJobStatus } from '@/utils';
 import { UrlChecksTable, JobProgress } from '@/features';
 import {
   CancelButton,
@@ -29,29 +28,8 @@ import {
   StatsGrid,
   StatValue,
 } from './styles';
-
-type StatusChipColor = 'default' | 'primary' | 'success' | 'error' | 'warning';
-
-//TODO: will move
-const getStatusColor = (status: JobStatus): StatusChipColor => {
-  if (status === 'completed') {
-    return 'success';
-  }
-
-  if (status === 'cancelled') {
-    return 'warning';
-  }
-
-  if (status === 'failed') {
-    return 'error';
-  }
-
-  if (status === 'in_progress') {
-    return 'primary';
-  }
-
-  return 'default';
-};
+import { ButtonContent } from '@/components';
+import { BUTTON_LABEL, JOB_DETAILS_COPY } from '@/constants';
 
 export const JobDetails: FC = () => {
   const dispatch = useAppDispatch();
@@ -61,19 +39,10 @@ export const JobDetails: FC = () => {
   const isCancelLoading = useAppSelector(selectCancelJobLoading);
   const error = useAppSelector(selectJobsError);
 
-  const canPoll =
-    activeJobId !== null &&
-    (details === null || !isFinalJobStatus(details.status));
-
   const canCancel =
     activeJobId !== null &&
     details !== null &&
     !isFinalJobStatus(details.status);
-
-  useJobPolling({
-    jobId: activeJobId,
-    enabled: canPoll,
-  });
 
   const handleCancel = async (): Promise<void> => {
     if (!activeJobId || !canCancel) {
@@ -91,9 +60,7 @@ export const JobDetails: FC = () => {
 
   if (!activeJobId) {
     return (
-      <DetailsEmptyState>
-        Select a job from the list to inspect its details.
-      </DetailsEmptyState>
+      <DetailsEmptyState>{JOB_DETAILS_COPY.EMPTY}</DetailsEmptyState>
     );
   }
 
@@ -101,8 +68,8 @@ export const JobDetails: FC = () => {
     return (
       <DetailsEmptyState>
         {isDetailsLoading
-          ? 'Loading job details...'
-          : 'Job details are not loaded yet.'}
+          ? JOB_DETAILS_COPY.LOADING
+          : JOB_DETAILS_COPY.NOT_LOADED}
       </DetailsEmptyState>
     );
   }
@@ -112,12 +79,12 @@ export const JobDetails: FC = () => {
       <DetailsHeader>
         <DetailsTitleGroup>
           <DetailsTitle>Job details</DetailsTitle>
-          <DetailsId>{details.id}</DetailsId>
+          <DetailsId title={details.id}>Job #{details.id.slice(0, 8)}</DetailsId>
         </DetailsTitleGroup>
 
         <DetailsActions>
           <DetailsStatusChip
-            color={getStatusColor(details.status)}
+            color={getStatusChipColor(details.status)}
             label={getJobStatusLabel(details.status)}
           />
 
@@ -128,7 +95,12 @@ export const JobDetails: FC = () => {
             type="button"
             variant="outlined"
           >
-            {isCancelLoading ? 'Cancelling...' : 'Cancel job'}
+            <ButtonContent
+              isLoading={isCancelLoading}
+              loadingText={BUTTON_LABEL.CANCELLING}
+            >
+              {BUTTON_LABEL.CANCEL_JOB}
+            </ButtonContent>
           </CancelButton>
         </DetailsActions>
       </DetailsHeader>

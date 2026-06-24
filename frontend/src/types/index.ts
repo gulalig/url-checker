@@ -9,6 +9,7 @@ export type {
   JobSummary,
   UrlCheck,
   UrlCheckStatus,
+  UrlCheckStatusFilter
 } from './jobs.types';
 
 export type { ApiErrorResponse } from './api.types';

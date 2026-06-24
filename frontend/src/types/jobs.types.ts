@@ -60,3 +60,5 @@ export type CancelJobResponse = {
 export type CreateJobFormValues = {
   urls: string;
 };
+
+export type UrlCheckStatusFilter = UrlCheckStatus | 'all';

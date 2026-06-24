@@ -38,11 +38,15 @@ export const DetailsTitle = styled(Typography)(({ theme }) => ({
 }));
 
 export const DetailsId = styled('span')(({ theme }) => ({
+  display: 'inline-flex',
+  width: 'fit-content',
+  padding: theme.spacing(0.35, 0.9),
+  border: `1px solid ${theme.palette.divider}`,
+  borderRadius: 999,
+  backgroundColor: '#f8fafc',
   color: theme.palette.text.secondary,
-  fontFamily:
-    'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace',
-  fontSize: '0.8rem',
-  wordBreak: 'break-all',
+  fontSize: '0.78rem',
+  fontWeight: 800,
 }));
 
 export const DetailsStatusChip = styled(Chip)(() => ({
@@ -51,6 +55,7 @@ export const DetailsStatusChip = styled(Chip)(() => ({
 }));
 
 export const StatsGrid = styled(Grid)(({ theme }) => ({
+  display: 'grid',
   gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
   gap: theme.spacing(1.5),
 

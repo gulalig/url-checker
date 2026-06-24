@@ -9,29 +9,8 @@ import {
   JobStat,
   JobInfo,
 } from './styles';
-import type { JobStatus, JobSummary } from '@/types';
-
-const getStatusColor = (
-  status: JobStatus,
-): 'default' | 'primary' | 'success' | 'error' | 'warning' => {
-  if (status === 'completed') {
-    return 'success';
-  }
-
-  if (status === 'cancelled') {
-    return 'warning';
-  }
-
-  if (status === 'failed') {
-    return 'error';
-  }
-
-  if (status === 'in_progress') {
-    return 'primary';
-  }
-
-  return 'default';
-};
+import type { JobSummary } from '@/types';
+import { formatDateTime, getJobStatusLabel, getStatusChipColor } from '@/utils';
 
 type JobListItemProps = {
   job: JobSummary;
@@ -40,15 +19,10 @@ type JobListItemProps = {
 };
 
 export const JobListItem: FC<JobListItemProps> = ({ job, isActive, onSelect }) => {
-  const formattedDate = new Date(job.createdAt).toLocaleString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  const formattedDate = formatDateTime(job.createdAt);
 
-  const getJobDisplayId = (id: string): string => `Job #${id.slice(0, 8)}`;
+  const getJobDisplayId = (id: string): string =>
+    `Job #${id.slice(0, 8)}`;
 
   return (
     <JobItemButton isActive={isActive} onClick={() => onSelect(job.id)}>
@@ -59,8 +33,8 @@ export const JobListItem: FC<JobListItemProps> = ({ job, isActive, onSelect }) =
         </JobInfo>
 
         <JobStatusChip
-          color={getStatusColor(job.status)}
-          label={job.status.replace('_', ' ')}
+          color={getStatusChipColor(job.status)}
+          label={getJobStatusLabel(job.status)}
           size="small"
         />
       </JobItemTop>

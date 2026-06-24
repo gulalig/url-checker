@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import type { NextFunction, Request, Response } from 'express';
 import { serve } from 'inngest/express';
 import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
@@ -26,12 +27,23 @@ const bootstrap = async (): Promise<void> => {
 
   const logger = app.get(Logger);
 
+  const expressInstance = app.getHttpAdapter().getInstance();
+  expressInstance.disable('etag');
+
   app.useLogger(logger);
 
   app.enableCors({
     origin: getAllowedOrigins(),
     methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
+  });
+
+  app.use((_: Request, response: Response, next: NextFunction) => {
+    response.setHeader('Cache-Control', 'no-store');
+    response.setHeader('Pragma', 'no-cache');
+    response.setHeader('Expires', '0');
+
+    next();
   });
 
   app.setGlobalPrefix('api');
